@@ -38,18 +38,6 @@ class User(usermgmt.User):
         attr = value
         return True
 
-    def add(self, attribute, value):
-        self.refresh()
-        attr = getattr(self, attribute)
-        if attr is list:
-            attr.append(value)
-            return True
-        elif attr is set:
-            attr.add(value)
-            return True
-        else:
-            return False
-
     def refresh(self):
         u = table_users.get_item(Key={'username': self.username})['Item']
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
@@ -135,9 +123,6 @@ class connection(Backend):
             )
         return users
 
-    def get_user(username):
-        return create_user_object(username)
-
     def get_groups(self):
         groups = []
         dynamo_groups = list(self.table_groups.scan()['Items'])
@@ -163,27 +148,9 @@ class connection(Backend):
             )
         return roles
 
-    def get_role(self, rolename):
-        r = self.table_roles.get_item(Key={'rolename': rolename})
-        if r:
-            return Role(
-                rolename=sanitize_attribute(r['Item'], 'rolename'),
-                groups=sanitize_attribute(r['Item'], 'groups')
-            )
-        else:
-            return None
-
-
-    def get_dynamo_user(self, username):
-        u = self.table_users.get_item(Key={'username': username})
-        if u:
-            return u['Item']
-        else:
-            return None
-
-    def create_user_object(self, username):
-        dynamo_user = get_dynamo_user(username)
-        if not dynamo_user: return None
+    def get_user(self, username):
+        dynamo_user = self.get_dynamo_user(username)
+        if not dynamo_user: return False
         return User(
             username=sanitize_attribute(dynamo_user, 'username'),
             hash_ldap=sanitize_attribute(dynamo_user, 'hash_ldap'),
@@ -197,5 +164,120 @@ class connection(Backend):
             auth_code_date=sanitize_attribute(dynamo_user, 'auth_code_date')
         )
 
+    def get_role(self, rolename):
+        dynamo_role = self.get_dynamo_role(rolename)
+        if not dynamo_role: return False
+        return Role(
+            rolename=sanitize_attribute(dynamo_role, 'rolename'),
+            groups=sanitize_attribute(dynamo_role, 'groups')
+        )
+
+    def get_group(self, groupname):
+        dynamo_group = self.get_dynamo_user(username)
+        if not dynamo_group: return False
+        return Group(
+            groupname=sanitize_attribute(dynamo_group, 'groupname'),
+            gid=sanitize_attribute(dynamo_group, 'gid')
+        )
+
+    def get_dynamo_role(self, rolename):
+        r = self.table_roles.get_item(Key={'rolename': rolename})
+        if r:
+            return r['Item']
+        else:
+            return False
+
+    def get_dynamo_user(self, username):
+        u = self.table_users.get_item(Key={'username': username})
+        if u:
+            return u['Item']
+        else:
+            return False
+
+    def get_dynamo_group(self, groupname):
+        g = self.table_groups.get_item(Key={'groupname': groupname})
+        if g:
+            return g['Item']
+        else:
+            return None
+
+    def create_role(self, rolename, groups):
+        r = Role(
+            rolename=rolename,
+            groups=groups
+        )
+        r.save()
+        return r
+
+    def create_group(self, groupname):
+        g = Group(
+            groupname=groupname,
+            gid=str(int(max([group.gid for group in self.get_groups()]))+1)
+        )
+        g.save()
+        return g
+
+    def create_user(self, username, email, rolename):
+        u = User(
+            username=username,
+            email=email,
+            groups=self.get_role(rolename).groups,
+            uidNumber=str(int(max([user.uidNumber for user in self.get_dynamo_users()]))+1)
+        )
+        u.save()
+        return u
+
+    def delete_role(self, rolename):
+        return self.table_roles.delete_item(Key={'rolename': rolename})
+
+    def delete_user(self, username):
+        return self.table_users.delete_item(Key={'username': username})
+
+    def delete_group(self, groupname):
+        members = self.get_group_members(groupname)
+        for member in members:
+            self.remove_user_from_group(member, groupname)
+        if self.get_group_members(groupname):
+            return False
+        return self.table_groups.delete_item(Key={'groupname': groupname})
 
 
+    def add_group_to_role(self, rolename, groupname):
+        r = self.get_role(rolename)
+        if groupname not in r.groups:
+            r.groups.add(groupname)
+            r.save()
+            return True
+        else:
+            return False
+
+    def remove_group_from_role(self, rolename, groupname):
+        r = self.get_role(rolename)
+        if groupname in r.groups:
+            r.groups.remove(groupname)
+            r.save()
+            return True
+        else:
+            return False
+
+    def add_user_to_group(self, username, groupname):
+        u = self.get_user(username)
+        if groupname not in u.groups:
+            u.groups.add(groupname)
+            u.save()
+            return True
+        else:
+            return False
+
+    def remove_user_from_group(self, username, groupname):
+        u = self.get_user(username)
+        if groupname in u.groups:
+            u.groups.remove(groupname)
+            u.save()
+            return True
+        else:
+            return False
+
+    def get_group_users(groupname):
+        users = self.get_users()
+        return [u.username for u in users if groupname in u.groups]

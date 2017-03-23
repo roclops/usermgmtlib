@@ -1,5 +1,3 @@
-# pip install python3-ldap
-
 import ldap3
 from ldap3 import Server, Connection, ALL, EXTERNAL, SASL, SUBTREE, MODIFY_ADD, MODIFY_DELETE
 import ldap3.core.exceptions
