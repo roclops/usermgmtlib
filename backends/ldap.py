@@ -119,6 +119,8 @@ class connection(Backend):
         result = self.connection.add(dn, attributes=attrs)
         if result:
             print('Added group [%s].' % (g.groupname))
+        else:
+            print(self.connection.result)
         return True
 
     def del_group(self, g):

@@ -32,6 +32,24 @@ class Group(usermgmt.Group):
         return True
 
 class User(usermgmt.User):
+    def set(self, attribute, value):
+        self.refresh()
+        attr = getattr(self, attribute)
+        attr = value
+        return True
+
+    def add(self, attribute, value):
+        self.refresh()
+        attr = getattr(self, attribute)
+        if attr is list:
+            attr.append(value)
+            return True
+        elif attr is set:
+            attr.add(value)
+            return True
+        else:
+            return False
+
     def refresh(self):
         u = table_users.get_item(Key={'username': self.username})['Item']
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
@@ -117,6 +135,9 @@ class connection(Backend):
             )
         return users
 
+    def get_user(username):
+        return create_user_object(username)
+
     def get_groups(self):
         groups = []
         dynamo_groups = list(self.table_groups.scan()['Items'])
@@ -142,7 +163,7 @@ class connection(Backend):
             )
         return roles
 
-    def get_role(rolename):
+    def get_role(self, rolename):
         r = self.table_roles.get_item(Key={'rolename': rolename})
         if r:
             return Role(
@@ -151,4 +172,30 @@ class connection(Backend):
             )
         else:
             return None
+
+
+    def get_dynamo_user(self, username):
+        u = self.table_users.get_item(Key={'username': username})
+        if u:
+            return u['Item']
+        else:
+            return None
+
+    def create_user_object(self, username):
+        dynamo_user = get_dynamo_user(username)
+        if not dynamo_user: return None
+        return User(
+            username=sanitize_attribute(dynamo_user, 'username'),
+            hash_ldap=sanitize_attribute(dynamo_user, 'hash_ldap'),
+            password_mod_date=sanitize_attribute(dynamo_user, 'password_mod_date'),
+            email=sanitize_attribute(dynamo_user, 'email'),
+            uidNumber=sanitize_attribute(dynamo_user, 'uidNumber'),
+            public_keys=sanitize_attribute(dynamo_user, 'public_keys'),
+            sshkey_mod_date=sanitize_attribute(dynamo_user, 'sshkey_mod_date'),
+            groups=sanitize_attribute(dynamo_user, 'groups'),
+            auth_code=sanitize_attribute(dynamo_user, 'auth_code'),
+            auth_code_date=sanitize_attribute(dynamo_user, 'auth_code_date')
+        )
+
+
 
