@@ -33,6 +33,8 @@ class connection(Backend):
             conn.bind()
             self.connection = conn
             self.domain = os.getenv('LDAP_DOMAIN', 'dc=localdomain')
+            if not self.domain.startswith('dc='):
+                self.domain = 'dc=' + self.domain
         except Exception as e:
             print('Could not connect to ldap server! (%s)' % (e))
             sys.exit(1)
