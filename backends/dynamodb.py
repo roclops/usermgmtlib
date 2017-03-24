@@ -36,9 +36,11 @@ class Group(usermgmt.Group):
 class User(usermgmt.User):
     def set(self, attribute, value):
         self.refresh()
+        print('AC: %s, ACD: %s' % (u.auth_code, u.auth_code_date))
         print('ATTR: %s, VAL: %s' % (attribute, value))
         attr = getattr(self, attribute)
         attr = value
+        print('2AC: %s, 2ACD: %s' % (u.auth_code, u.auth_code_date))
         self.save()
         return True
 
