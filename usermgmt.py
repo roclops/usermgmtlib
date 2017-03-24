@@ -1,6 +1,5 @@
 #from sshpubkeys import SSHKey
 
-
 class Usermgmt(object):
     def attrs(self):
         raise NotImplementedError
@@ -87,7 +86,7 @@ class User(Usermgmt):
         return 0
 
     def attrs(self):
-        return ['username', 'password', 'email', 'uid', 'public_keys', 'groups']
+        return ['username', 'password', 'email', 'uid', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
 
     def validate_key(self, key):
         try:
