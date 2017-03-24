@@ -39,7 +39,7 @@ class User(usermgmt.User):
         return True
 
     def refresh(self):
-        u = table_users.get_item(Key={'username': self.username})['Item']
+        u = self.table_users.get_item(Key={'username': self.username})['Item']
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
         self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
         self.email = sanitize_attribute(u, 'email')
@@ -84,7 +84,7 @@ class User(usermgmt.User):
         if remove_values:
             update_expression = set_expression + ' ' + remove_expression
 
-        table_users.update_item(
+        self.table_users.update_item(
             Key = {'username': self.username},
             UpdateExpression = update_expression,
             ExpressionAttributeValues = values,
