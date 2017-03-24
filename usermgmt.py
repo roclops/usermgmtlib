@@ -97,19 +97,19 @@ class User(Usermgmt):
         except:
             return False
 
-    def get_ssh_key_comment(key):
+    def get_ssh_key_comment(self, key):
         ssh = SSHKey(key)
         ssh.parse()
         return ssh.comment
 
-    def get_ssh_key_hash(key):
+    def get_ssh_key_hash(self, key):
         ssh = SSHKey(key)
         ssh.parse()
         return ssh.hash_md5().split('MD5:').pop()
 
     def check_key_exist(self, key):
         for test_key in self.public_keys:
-            if get_ssh_key_hash(key) == get_ssh_key_hash(test_key):
+            if self.get_ssh_key_hash(key) == self.get_ssh_key_hash(test_key):
                 return True
         return False
 
@@ -138,13 +138,13 @@ class User(Usermgmt):
 
     def find_key_by_hash(self, hash_md5):
         for key in self.public_keys:
-            test_hash = get_ssh_key_hash(key)
+            test_hash = self.get_ssh_key_hash(key)
             if hash_md5 == test_hash:
                 return key
         return None
 
     def is_admin(self):
-        return self.is_group_member('ADMIN_GROUP')
+        return self.is_group_member('internal.admins')
 
     def is_group_member(self, group):
         if group in self.groups:
