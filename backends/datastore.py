@@ -107,7 +107,7 @@ class connection(Backend):
     def get_kind_list(self, kind, order):
         query = self.client.query(kind=kind)
         query.order = [order]
-        return = list(query.fetch())
+        return list(query.fetch())
 
     def get_ds_key(self, kind, key):
         with client.transaction():
