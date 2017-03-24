@@ -65,7 +65,7 @@ class connection(Backend):
         credentials, project = google.auth.default()
         self.client = datastore.Client(project)
 
-    def get_kind_list(self, kind, order):
+    def get_kind_list(self, kind, order=None):
         query = self.client.query(kind=kind)
         query.order = [order]
         return list(query.fetch())
