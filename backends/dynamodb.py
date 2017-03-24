@@ -36,6 +36,7 @@ class Group(usermgmt.Group):
 class User(usermgmt.User):
     def set(self, attribute, value):
         self.refresh()
+        print('ATTR: %s, VAL: %s' % (attribute, value))
         attr = getattr(self, attribute)
         attr = value
         self.save()
