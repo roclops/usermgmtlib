@@ -79,7 +79,7 @@ class connection(Backend):
             ds_key = self.client.key(kind, key)
             ds_get = self.client.get(ds_key)
             if ds_get:
-                return ds_get
+                return (ds_get, ds_key)
             else:
                 return False
 
@@ -126,10 +126,10 @@ class connection(Backend):
         return roles
 
     def get_user(self, username):
-        ds_user = self.get_ds_key('usermgmt_users', username)
+        ds_user, ds_key = self.get_ds_key('usermgmt_users', username)
         if not ds_user: return False
         return User(
-            username=ds_user.name(),
+            username=ds_key.name(),
             hash_ldap=sanitize_attribute(ds_user, 'hash_ldap'),
             password_mod_date=sanitize_attribute(ds_user, 'password_mod_date'),
             email=sanitize_attribute(ds_user, 'email'),
@@ -142,18 +142,18 @@ class connection(Backend):
         )
 
     def get_role(self, rolename):
-        ds_role = self.get_ds_key('usermgmt_roles', rolename)
+        ds_role, ds_key = self.get_ds_key('usermgmt_roles', rolename)
         if not ds_role: return False
         return Role(
-            rolename=ds_role.name(),
+            rolename=ds_key.name(),
             groups=sanitize_attribute(ds_role, 'groups')
         )
 
     def get_group(self, groupname):
-        ds_group = self.get_ds_key('usermgmt_group', groupname)
+        ds_group, ds_key = self.get_ds_key('usermgmt_group', groupname)
         if not ds_group: return False
         return Group(
-            groupname=ds_group.name(),
+            groupname=ds_key.name(),
             gid=sanitize_attribute(ds_group, 'gid')
         )
 
