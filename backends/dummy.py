@@ -42,7 +42,7 @@ class User(usermgmt.User):
 
     def refresh(self):
         conn = connection()
-        u = conn.get_user(self.username)
+        u = conn.table_users.get_item(Key={'username': self.username})['Item']
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
         self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
         self.email = sanitize_attribute(u, 'email')
@@ -88,12 +88,13 @@ class User(usermgmt.User):
             update_expression = set_expression + ' ' + remove_expression
 
         conn = connection()
-        return conn.table_users.update_item(
+        conn.table_users.update_item(
             Key = {'username': self.username},
             UpdateExpression = update_expression,
             ExpressionAttributeValues = values,
             ReturnValues = 'UPDATED_NEW'
         )
+        return True
 
 class connection(Backend):
     def __init__(self):

@@ -5,6 +5,8 @@
 * boto3
 * sshpubkeys
 * ldap3
+* google-auth
+* google-cloud-datastore
 
 ## To Do
 
