@@ -38,6 +38,7 @@ class User(usermgmt.User):
         self.refresh()
         attr = getattr(self, attribute)
         attr = value
+        self.save()
         return True
 
     def refresh(self):
