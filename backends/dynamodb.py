@@ -10,13 +10,14 @@ def sanitize_attribute(item, attr):
 
 class Role(usermgmt.Role):
     def refresh(self):
-        r = self.table_roles.get_item(Key={'rolename': self.rolename})['Item']
-        self.groups = sanitize_attribute(u, 'groups')
+        conn = connection()
+        r = conn.get_role(rolename)
         return True
 
     def save(self):
-        self.table_roles.delete_item(Key={'rolename': self.rolename})
-        self.table_roles.put_item(Item=self.get_dict())
+        conn = connection()
+        conn.delete_role(rolename)
+        conn.table_roles.put_item(Item=self.get_dict())
         return True
 
 class Group(usermgmt.Group):
@@ -27,8 +28,9 @@ class Group(usermgmt.Group):
         return True
 
     def save(self):
-        self.table_groups.delete_item(Key={'groupname': self.groupname})
-        self.table_groups.put_item(Item=self.get_dict())
+        conn = connection()
+        conn.table_groups.delete_item(Key={'groupname': self.groupname})
+        conn.table_groups.put_item(Item=self.get_dict())
         return True
 
 class User(usermgmt.User):
@@ -39,7 +41,8 @@ class User(usermgmt.User):
         return True
 
     def refresh(self):
-        u = self.table_users.get_item(Key={'username': self.username})['Item']
+        conn = connection()
+        u = conn.table_users.get_item(Key={'username': self.username})['Item']
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
         self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
         self.email = sanitize_attribute(u, 'email')
@@ -84,7 +87,8 @@ class User(usermgmt.User):
         if remove_values:
             update_expression = set_expression + ' ' + remove_expression
 
-        self.table_users.update_item(
+        conn = connection()
+        conn.table_users.update_item(
             Key = {'username': self.username},
             UpdateExpression = update_expression,
             ExpressionAttributeValues = values,
