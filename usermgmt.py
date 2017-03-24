@@ -57,21 +57,35 @@ class Group(Usermgmt):
     def attrs(self):
         return ['groupname', 'gid']
 
-
 class User(Usermgmt):
-    def __init__(self, username=None, password=None, email=None, uid=None, public_keys=None, groups=None):
+    def __init__(self, username=None, hash_ldap=None, password_mod_date=None, email=None, uidNumber=None, public_keys=[], sshkey_mod_date=None, groups=[], auth_code=None, auth_code_date=None):
         self.username = str(username)
-        self.password = str(password)
+        self.hash_ldap = str(hash_ldap)
+        self.password_mod_date = str(password_mod_date)
         self.email = str(email)
-        self.uid = str(uid)
+        self.uidNumber = str(uidNumber)
         if public_keys:
-            self.public_keys = [str(k) for k in public_keys]
+            self.public_keys = set(public_keys)
         else:
-            self.public_keys = None
+            self.public_keys = set()
+        self.sshkey_mod_date = str(sshkey_mod_date)
         if groups:
-            self.groups = [str(g) for g in groups]
+            self.groups = set(sorted(groups))
         else:
-            self.groups = None
+            self.groups = set()
+        self.auth_code= str(auth_code)
+        self.auth_code_date = str(auth_code_date)
+
+    def __eq__(self, other):
+        return self.username == other.username and \
+            self.hash_ldap == other.hash_ldap and \
+            self.password_mod_date == other.password_mod_date and \
+            self.email == other.email and \
+            self.uidNumber == other.uidNumber and \
+            self.public_keys == other.public_keys and \
+            self.groups == other.groups and \
+            self.auth_code == other.auth_code and \
+            self.auth_code_date == other.auth_code_date
 
     def __cmp__(self, other):
         for a in self.attrs():
