@@ -216,7 +216,7 @@ class connection(Backend):
     def create_group(self, groupname):
         g = Group(
             groupname=groupname,
-            gid=str(int(max([group.gid for group in self.get_groups()]))+1)
+            gid=str(self.get_max_gid())
         )
         g.save()
         return g
@@ -226,7 +226,7 @@ class connection(Backend):
             username=username,
             email=email,
             groups=self.get_role(rolename).groups,
-            uidNumber=str(int(max([user.uidNumber for user in self.get_dynamo_users()]))+1)
+            uidNumber=str(self.get_max_uidNumber())
         )
         u.save()
         return u
@@ -285,3 +285,9 @@ class connection(Backend):
     def get_group_users(groupname):
         users = self.get_users()
         return [u.username for u in users if groupname in u.groups]
+
+    def get_max_gid(self):
+        return int(max([group.gid for group in self.get_groups()]))+1
+
+    def get_max_uidNumber(self):
+        return int(max([user.uidNumber for user in self.get_users()]))+1
