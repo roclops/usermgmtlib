@@ -1,4 +1,4 @@
-#from sshpubkeys import SSHKey
+from sshpubkeys import SSHKey
 
 class Usermgmt(object):
     def attrs(self):
