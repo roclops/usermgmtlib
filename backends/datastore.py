@@ -67,7 +67,8 @@ class connection(Backend):
 
     def get_kind_list(self, kind, order=None):
         query = self.client.query(kind=kind)
-        query.order = [order]
+        if order:
+            query.order = [order]
         return list(query.fetch())
 
     def delete_ds_key(self, kind, key):
