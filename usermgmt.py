@@ -100,7 +100,7 @@ class User(Usermgmt):
         return 0
 
     def attrs(self):
-        return ['username', 'password', 'email', 'uid', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
+        return ['username', 'password', 'email', 'uidNumber', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
 
     def validate_key(self, key):
         try:

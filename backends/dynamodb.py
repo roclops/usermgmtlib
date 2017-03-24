@@ -118,8 +118,8 @@ class connection(Backend):
             users.append(
                 User(
                     username=u['username'],
-                    password=u['hash_ldap'],
-                    uid=u['uidNumber'],
+                    hash_ldap=u['hash_ldap'],
+                    uidNumber=u['uidNumber'],
                     email=u['email'],
                     public_keys=public_keys,
                     groups=groups
