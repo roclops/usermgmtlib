@@ -20,7 +20,7 @@ class Role(usermgmt.Role):
     def save(self):
         conn = connection()
         conn.delete_role(rolename)
-        return conn.table_roles.put_item(Item=self.get_dict())
+        return True # conn.table_roles.put_item(Item=self.get_dict())
 
 class Group(usermgmt.Group):
     def refresh(self):
@@ -33,7 +33,7 @@ class Group(usermgmt.Group):
     def save(self):
         conn = connection()
         conn.delete_group(self.groupname)
-        return conn.table_groups.put_item(Item=self.get_dict())
+        return True # conn.table_groups.put_item(Item=self.get_dict())
 
 class User(usermgmt.User):
     def set(self, attribute, value):
@@ -44,7 +44,7 @@ class User(usermgmt.User):
 
     def refresh(self):
         conn = connection()
-        u = conn.table_users.get_item(Key={'username': self.username})['Item']
+        u = conn.get_user(self.username)
         self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
         self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
         self.email = sanitize_attribute(u, 'email')
@@ -57,45 +57,6 @@ class User(usermgmt.User):
         return True
 
     def save(self):
-        values = {
-            ':hash_ldap': str(self.hash_ldap),
-            ':password_mod_date': str(self.password_mod_date),
-            ':email': str(self.email),
-            ':uidNumber': str(self.uidNumber),
-            ':sshkey_mod_date': str(self.sshkey_mod_date),
-            ':auth_code': str(self.auth_code),
-            ':auth_code_date': str(self.auth_code_date)
-        }
-
-        remove_values = []
-        if self.groups:
-            values[':groups'] = self.groups
-        else:
-            remove_values.append('groups')
-
-        if self.public_keys:
-            values[':public_keys'] = self.public_keys
-        else:
-            remove_values.append('public_keys')
-
-        set_params = []
-        for k, v in values.items():
-            set_params.append('%s = %s' % (k.lstrip(':'), k))
-
-        set_expression = 'SET ' + ','.join(set_params)
-        remove_expression = 'REMOVE ' + ','.join(remove_values)
-
-        update_expression = set_expression
-        if remove_values:
-            update_expression = set_expression + ' ' + remove_expression
-
-        conn = connection()
-        conn.table_users.update_item(
-            Key = {'username': self.username},
-            UpdateExpression = update_expression,
-            ExpressionAttributeValues = values,
-            ReturnValues = 'UPDATED_NEW'
-        )
         return True
 
 class connection(Backend):
@@ -109,8 +70,12 @@ class connection(Backend):
         query.order = [order]
         return list(query.fetch())
 
+    def delete_ds_key(self, kind, key):
+        ds_key = self.client.key(kind, key)
+        return self.client.delete(ds_key)
+
     def get_ds_key(self, kind, key):
-        with client.transaction():
+        with self.client.transaction():
             ds_key = self.client.key(kind, key)
             ds_get = self.client.get(ds_key)
             if ds_get:
@@ -177,19 +142,19 @@ class connection(Backend):
         )
 
     def get_role(self, rolename):
-        dynamo_role = self.get_dynamo_role(rolename)
-        if not dynamo_role: return False
+        ds_role = self.get_ds_key('usermgmt_roles', rolename)
+        if not ds_role: return False
         return Role(
-            rolename=sanitize_attribute(dynamo_role, 'rolename'),
-            groups=sanitize_attribute(dynamo_role, 'groups')
+            rolename=sanitize_attribute(ds_role, 'rolename'),
+            groups=sanitize_attribute(ds_role, 'groups')
         )
 
     def get_group(self, groupname):
-        dynamo_group = self.get_dynamo_user(username)
-        if not dynamo_group: return False
+        ds_group = self.get_ds_key('usermgmt_group', groupname)
+        if not ds_group: return False
         return Group(
-            groupname=sanitize_attribute(dynamo_group, 'groupname'),
-            gid=sanitize_attribute(dynamo_group, 'gid')
+            groupname=sanitize_attribute(ds_group, 'groupname'),
+            gid=sanitize_attribute(ds_group, 'gid')
         )
 
     def create_role(self, rolename, groups):
@@ -219,10 +184,10 @@ class connection(Backend):
         return u
 
     def delete_role(self, rolename):
-        return self.table_roles.delete_item(Key={'rolename': rolename})
+        return self.delete_ds_key('usermgmt_roels', rolename)
 
     def delete_user(self, username):
-        return self.table_users.delete_item(Key={'username': username})
+        return self.delete_ds_key('usermgmt_users', username)
 
     def delete_group(self, groupname):
         members = self.get_group_members(groupname)
@@ -230,8 +195,7 @@ class connection(Backend):
             self.remove_user_from_group(member, groupname)
         if self.get_group_members(groupname):
             return False
-        return self.table_groups.delete_item(Key={'groupname': groupname})
-
+        return self.delete_ds_key('usermgmt_groups', groupname)
 
     def add_group_to_role(self, rolename, groupname):
         r = self.get_role(rolename)
