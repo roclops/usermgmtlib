@@ -1,6 +1,6 @@
 import usermgmtlib.usermgmt as usermgmt
 from usermgmtlib.backends import Backend, Singleton
-
+import time
 import google.auth
 from google.cloud import datastore
 
@@ -65,8 +65,10 @@ class connection(Backend):
         self.name = 'datastore'
         credentials, project = google.auth.default()
         self.client = datastore.Client(project)
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' __init__')
 
     def get_kind_list(self, kind, order=None):
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_kind_list()')
         query = self.client.query(kind=kind)
         if order:
             query.order = [order]
@@ -77,6 +79,7 @@ class connection(Backend):
         return self.client.delete(ds_key)
 
     def get_ds_entity(self, kind, key):
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_ds_entity()')
         with self.client.transaction():
             ds_key = self.client.key(kind, key)
             ds_get = self.client.get(ds_key)
@@ -86,6 +89,7 @@ class connection(Backend):
                 return False
 
     def get_users(self):
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_users()')
         ds_users = self.get_kind_list('usermgmt_users')
         if not ds_users: return []
         users = []
@@ -103,6 +107,7 @@ class connection(Backend):
         return users
 
     def get_groups(self):
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_groups()')
         groups = []
         ds_groups = self.get_kind_list('usermgmt_groups')
         if not ds_groups: return []
@@ -116,6 +121,7 @@ class connection(Backend):
         return groups
 
     def get_roles(self):
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_roles()')
         roles = []
         ds_roles = self.get_kind_list('usermgmt_roles')
         for r in ds_roles:
