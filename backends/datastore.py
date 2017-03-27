@@ -35,7 +35,9 @@ class Role(usermgmt.Role):
     def save(self):
         conn = connection()
         conn.delete_role(rolename)
-        conn.client.put(self.get_dict())
+        ds_entity = conn.get_ds_entity('usermgmt_roles', self.rolename)
+        ds_entity.update(self.get_dict())
+        conn.put(ds_entity)
         return True
 
 class Group(usermgmt.Group):
@@ -48,7 +50,9 @@ class Group(usermgmt.Group):
     def save(self):
         conn = connection()
         conn.delete_group(self.groupname)
-        conn.client.put(self.get_dict())
+        ds_entity = conn.get_ds_entity('usermgmt_groups', self.groupname)
+        ds_entity.update(self.get_dict())
+        conn.put(ds_entity)
         return True
 
 class User(usermgmt.User):
@@ -67,7 +71,9 @@ class User(usermgmt.User):
     def save(self):
         conn = connection()
         conn.delete_user(self.username)
-        conn.client.put(self.get_dict())
+        ds_entity = conn.get_ds_entity('usermgmt_users', self.username)
+        ds_entity.update(self.get_dict())
+        conn.put(ds_entity)
         return True
 
 class connection(Backend):
