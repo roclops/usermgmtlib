@@ -1,5 +1,5 @@
 import usermgmtlib.usermgmt as usermgmt
-from usermgmtlib.backends import Backend
+from usermgmtlib.backends import Backend, Singleton
 
 import google.auth
 from google.cloud import datastore
@@ -59,6 +59,8 @@ class User(usermgmt.User):
         return True
 
 class connection(Backend):
+    __metaclass__ = Singleton
+
     def __init__(self):
         self.name = 'datastore'
         credentials, project = google.auth.default()

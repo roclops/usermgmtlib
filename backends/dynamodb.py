@@ -1,6 +1,7 @@
-import boto3
 import usermgmtlib.usermgmt as usermgmt
-from usermgmtlib.backends import Backend
+from usermgmtlib.backends import Backend, Singleton
+
+import boto3
 
 def sanitize_attribute(item, attr):
     try:
@@ -96,6 +97,8 @@ class User(usermgmt.User):
         )
 
 class connection(Backend):
+    __metaclass__ = Singleton
+
     def __init__(self):
         self.name = 'dynamodb'
         dynamodb = boto3.resource('dynamodb')
