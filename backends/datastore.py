@@ -37,6 +37,7 @@ class Role(usermgmt.Role):
         conn.delete_role(rolename)
         ds_entity = conn.new_ds_entity('usermgmt_roles', self.rolename)
         ds_entity.update(self.get_dict())
+        ds_entity['groups'] = list(self.groups)
         conn.client.put(ds_entity)
         return True
 
@@ -73,6 +74,8 @@ class User(usermgmt.User):
         conn.delete_user(self.username)
         ds_entity = conn.new_ds_entity('usermgmt_users', self.username)
         ds_entity.update(self.get_dict())
+        ds_entity['public_keys'] = list(self.public_keys)
+        ds_entity['groups'] = list(self.groups)
         conn.client.put(ds_entity)
         return True
 
