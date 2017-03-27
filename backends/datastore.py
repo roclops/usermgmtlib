@@ -16,25 +16,27 @@ class Role(usermgmt.Role):
     def refresh(self):
         conn = connection()
         r = conn.get_role(self.rolename)
-        self.roles = sanitize_attribute(r, 'roles')
+        self.__dict__.update(r.__dict__)
         return True
 
     def save(self):
         conn = connection()
         conn.delete_role(rolename)
-        return True # conn.table_roles.put_item(Item=self.get_dict())
+        conn.client.put(self.get_dict())
+        return True
 
 class Group(usermgmt.Group):
     def refresh(self):
         conn = connection()
         g = conn.get_group(self.groupname)
-        self.gid = sanitize_attribute(g, 'gid')
+        self.__dict__.update(g.__dict__)
         return True
 
     def save(self):
         conn = connection()
         conn.delete_group(self.groupname)
-        return True # conn.table_groups.put_item(Item=self.get_dict())
+        conn.client.put(self.get_dict())
+        return True
 
 class User(usermgmt.User):
     def set(self, attribute, value):
@@ -46,18 +48,13 @@ class User(usermgmt.User):
     def refresh(self):
         conn = connection()
         u = conn.get_user(self.username)
-        self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
-        self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
-        self.email = sanitize_attribute(u, 'email')
-        self.uidNumber = sanitize_attribute(u, 'uidNumber')
-        self.public_keys = sanitize_attribute(u, 'public_keys')
-        self.sshkey_mod_date = sanitize_attribute(u, 'sshkey_mod_date')
-        self.groups = sanitize_attribute(u, 'groups')
-        self.auth_code = sanitize_attribute(u, 'auth_code')
-        self.auth_code_date = sanitize_attribute(u, 'auth_code_date')
+        self.__dict__.update(u.__dict__)
         return True
 
     def save(self):
+        conn = connection()
+        conn.delete_user(self.username)
+        conn.client.put(self.get_dict())
         return True
 
 class connection(Backend):
