@@ -242,7 +242,7 @@ class connection(Backend):
         else:
             return False
 
-    def get_group_users(groupname):
+    def get_group_users(self, groupname):
         users = self.get_users()
         return [u.username for u in users if groupname in u.groups]
 
