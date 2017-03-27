@@ -64,13 +64,13 @@ class connection(Backend):
     __metaclass__ = Singleton
 
     def __init__(self):
-        print(time() + ' __init__')
+        print(str(time()) + ' __init__')
         self.name = 'datastore'
         credentials, project = google.auth.default()
         self.client = datastore.Client(project)
 
     def get_kind_list(self, kind, order=None):
-        print(time() + ' get_kind_list()')
+        print(str(time()) + ' get_kind_list()')
         query = self.client.query(kind=kind)
         if order:
             query.order = [order]
@@ -81,7 +81,7 @@ class connection(Backend):
         return self.client.delete(ds_key)
 
     def get_ds_entity(self, kind, key):
-        print(time() + ' get_ds_entity(%s, %s)' % (kind, key))
+        print(str(time()) + ' get_ds_entity(%s, %s)' % (kind, key))
         ds_key = self.client.key(kind, key)
         ds_get = self.client.get(ds_key)
         if ds_get:
@@ -90,7 +90,7 @@ class connection(Backend):
             return False
 
     def get_users(self):
-        print(time() + ' get_users()')
+        print(str(time()) + ' get_users()')
         ds_users = self.get_kind_list('usermgmt_users')
         if not ds_users: return []
         users = []
@@ -108,7 +108,7 @@ class connection(Backend):
         return users
 
     def get_groups(self):
-        print(time() + ' get_groups()')
+        print(str(time()) + ' get_groups()')
         groups = []
         ds_groups = self.get_kind_list('usermgmt_groups')
         if not ds_groups: return []
@@ -122,7 +122,7 @@ class connection(Backend):
         return groups
 
     def get_roles(self):
-        print(time() + ' get_roles()')
+        print(str(time()) + ' get_roles()')
         roles = []
         ds_roles = self.get_kind_list('usermgmt_roles')
         for r in ds_roles:
@@ -135,7 +135,7 @@ class connection(Backend):
         return roles
 
     def get_user(self, username):
-        print(time() + ' get_user(%s)' % username)
+        print(str(time()) + ' get_user(%s)' % username)
         ds_user = self.get_ds_entity('usermgmt_users', username)
         if not ds_user: return False
         return User(
@@ -152,7 +152,7 @@ class connection(Backend):
         )
 
     def get_role(self, rolename):
-        print(time() + ' get_role(%s)' % rolename)
+        print(str(time()) + ' get_role(%s)' % rolename)
         ds_role = self.get_ds_entity('usermgmt_roles', rolename)
         if not ds_role: return False
         return Role(
@@ -161,7 +161,7 @@ class connection(Backend):
         )
 
     def get_group(self, groupname):
-        print(time() + ' get_group(%s)' % groupname)
+        print(str(time()) + ' get_group(%s)' % groupname)
         ds_group = self.get_ds_entity('usermgmt_group', groupname)
         if not ds_group: return False
         return Group(
