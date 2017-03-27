@@ -34,7 +34,7 @@ class Role(usermgmt.Role):
 
     def save(self):
         conn = connection()
-        conn.delete_role(rolename)
+        conn.delete_role(self.rolename)
         ds_entity = conn.new_ds_entity('usermgmt_roles', self.rolename)
         ds_entity.update(self.get_dict())
         ds_entity['groups'] = list(self.groups)
@@ -102,12 +102,14 @@ class connection(Backend):
 
     @timeit
     def get_ds_entity(self, kind, key):
-        ds_key = self.client.key(kind, key)
-        ds_get = self.client.get(ds_key)
-        if ds_get:
+        try:
+            ds_key = self.client.key(kind, key)
+            ds_get = self.client.get(ds_key)
             return ds_get
-        else:
-            return False
+        except:
+            print('Entity not found.')
+            pass
+        return False
 
     @timeit
     def new_ds_entity(self, kind, key):
