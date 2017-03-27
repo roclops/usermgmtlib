@@ -240,10 +240,10 @@ class connection(Backend):
         return self.table_users.delete_item(Key={'username': username})
 
     def delete_group(self, groupname):
-        members = self.get_group_members(groupname)
+        members = self.get_group_users(groupname)
         for member in members:
             self.remove_user_from_group(member, groupname)
-        if self.get_group_members(groupname):
+        if self.get_group_users(groupname):
             return False
         return self.table_groups.delete_item(Key={'groupname': groupname})
 

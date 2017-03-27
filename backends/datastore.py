@@ -199,10 +199,10 @@ class connection(Backend):
         return self.delete_ds_key('usermgmt_users', username)
 
     def delete_group(self, groupname):
-        members = self.get_group_members(groupname)
+        members = self.get_group_users(groupname)
         for member in members:
             self.remove_user_from_group(member, groupname)
-        if self.get_group_members(groupname):
+        if self.get_group_users(groupname):
             return False
         return self.delete_ds_key('usermgmt_groups', groupname)
 
