@@ -79,7 +79,7 @@ class connection(Backend):
         return self.client.delete(ds_key)
 
     def get_ds_entity(self, kind, key):
-        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_ds_entity()')
+        print(time.strftime('%Y-%m-%d %H:%M:%S') + ' get_ds_entity(%s, %s)' % (kind, key))
         with self.client.transaction():
             ds_key = self.client.key(kind, key)
             ds_get = self.client.get(ds_key)
