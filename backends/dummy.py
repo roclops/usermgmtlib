@@ -1,6 +1,5 @@
-import boto3
 import usermgmtlib.usermgmt as usermgmt
-from usermgmtlib.backends import Backend
+from usermgmtlib.backends import Backend, Singleton
 
 def sanitize_attribute(item, attr):
     try:
@@ -10,200 +9,105 @@ def sanitize_attribute(item, attr):
 
 class Role(usermgmt.Role):
     def refresh(self):
-        conn = connection()
-        r = conn.get_role(self.rolename)
-        self.roles = sanitize_attribute(r, 'roles')
         return True
 
     def save(self):
-        conn = connection()
-        conn.delete_role(rolename)
-        return conn.table_roles.put_item(Item=self.get_dict())
+        return True
 
 class Group(usermgmt.Group):
     def refresh(self):
-        conn = connection()
-        g = conn.get_group(self.groupname)
-        self.groupname = sanitize_attribute(g, 'groupname')
-        self.gid = sanitize_attribute(g, 'gid')
         return True
 
     def save(self):
-        conn = connection()
-        conn.delete_group(self.groupname)
-        return conn.table_groups.put_item(Item=self.get_dict())
+        return True
 
 class User(usermgmt.User):
     def set(self, attribute, value):
-        self.refresh()
-        attr = setattr(self, attribute, value)
-        self.save()
         return True
 
     def refresh(self):
-        conn = connection()
-        u = conn.table_users.get_item(Key={'username': self.username})['Item']
-        self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
-        self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
-        self.email = sanitize_attribute(u, 'email')
-        self.uidNumber = sanitize_attribute(u, 'uidNumber')
-        self.public_keys = sanitize_attribute(u, 'public_keys')
-        self.sshkey_mod_date = sanitize_attribute(u, 'sshkey_mod_date')
-        self.groups = sanitize_attribute(u, 'groups')
-        self.auth_code = sanitize_attribute(u, 'auth_code')
-        self.auth_code_date = sanitize_attribute(u, 'auth_code_date')
         return True
 
     def save(self):
-        values = {
-            ':hash_ldap': str(self.hash_ldap),
-            ':password_mod_date': str(self.password_mod_date),
-            ':email': str(self.email),
-            ':uidNumber': str(self.uidNumber),
-            ':sshkey_mod_date': str(self.sshkey_mod_date),
-            ':auth_code': str(self.auth_code),
-            ':auth_code_date': str(self.auth_code_date)
-        }
-
-        remove_values = []
-        if self.groups:
-            values[':groups'] = self.groups
-        else:
-            remove_values.append('groups')
-
-        if self.public_keys:
-            values[':public_keys'] = self.public_keys
-        else:
-            remove_values.append('public_keys')
-
-        set_params = []
-        for k, v in values.items():
-            set_params.append('%s = %s' % (k.lstrip(':'), k))
-
-        set_expression = 'SET ' + ','.join(set_params)
-        remove_expression = 'REMOVE ' + ','.join(remove_values)
-
-        update_expression = set_expression
-        if remove_values:
-            update_expression = set_expression + ' ' + remove_expression
-
-        conn = connection()
-        conn.table_users.update_item(
-            Key = {'username': self.username},
-            UpdateExpression = update_expression,
-            ExpressionAttributeValues = values,
-            ReturnValues = 'UPDATED_NEW'
-        )
         return True
 
 class connection(Backend):
+    __metaclass__ = Singleton
+
     def __init__(self):
-        self.name = 'dynamodb'
-        dynamodb = boto3.resource('dynamodb')
-        self.table_users = dynamodb.Table('ldap_users')
-        self.table_groups = dynamodb.Table('ldap_groups')
-        self.table_roles = dynamodb.Table('ldap_roles')
+        self.name = 'dummy'
 
     def get_users(self):
+        backend_users = []     # <---- populate from backend source
         users = []
-        dynamo_users = list(self.table_users.scan()['Items'])
-        if not dynamo_users: return []
-        for u in dynamo_users:
-            public_keys = []
-            if 'public_keys' in u:
-                public_keys = [str(k) for k in u['public_keys']]
-            groups = []
-            if 'groups' in u:
-                groups = [g for g in u['groups']]
+        for u in backend_users:
             users.append(
                 User(
-                    username=u['username'],
-                    hash_ldap=u['hash_ldap'],
-                    uidNumber=u['uidNumber'],
-                    email=u['email'],
-                    public_keys=public_keys,
-                    groups=groups
+                    username=sanitize_attribute(u, 'username'),
+                    hash_ldap=sanitize_attribute(u, 'hash_ldap'),
+                    uidNumber=sanitize_attribute(u, 'uidNumber'),
+                    email=sanitize_attribute(u, 'email'),
+                    public_keys=sanitize_attribute(u, 'public_keys'),
+                    groups=sanitize_attribute(u, 'groups')
                 )
             )
         return users
 
     def get_groups(self):
+        backend_groups = []     # <---- populate from backend source
         groups = []
-        dynamo_groups = list(self.table_groups.scan()['Items'])
-        if not dynamo_groups: return []
-        for g in dynamo_groups:
+        for g in backend_groups:
             groups.append(
                 Group(
-                    groupname=g['groupname'],
-                    gid=g['gid']
+                    groupname=sanitize_attribute(g, 'groupname'),
+                    gid=sanitize_attribute(g, 'gid')
                 )
             )
         return groups
 
     def get_roles(self):
+        backend_roles = []     # <---- populate from backend source
         roles = []
-        dynamo_roles = list(self.table_roles.scan()['Items'])
-        for r in dynamo_roles:
+        for r in backend_roles:
             roles.append(
                 Role(
-                    rolename=sanitize_attribute(r, 'rolename'),
+                    rolename=sanitize_attribute(r, 'rolename')
                     groups=sanitize_attribute(r, 'groups')
                 )
             )
         return roles
 
     def get_user(self, username):
-        dynamo_user = self.get_dynamo_user(username)
-        if not dynamo_user: return False
+        backend_user = {}      # <---- populate from backend source
+        if not backend_user: return False
         return User(
-            username=sanitize_attribute(dynamo_user, 'username'),
-            hash_ldap=sanitize_attribute(dynamo_user, 'hash_ldap'),
-            password_mod_date=sanitize_attribute(dynamo_user, 'password_mod_date'),
-            email=sanitize_attribute(dynamo_user, 'email'),
-            uidNumber=sanitize_attribute(dynamo_user, 'uidNumber'),
-            public_keys=sanitize_attribute(dynamo_user, 'public_keys'),
-            sshkey_mod_date=sanitize_attribute(dynamo_user, 'sshkey_mod_date'),
-            groups=sanitize_attribute(dynamo_user, 'groups'),
-            auth_code=sanitize_attribute(dynamo_user, 'auth_code'),
-            auth_code_date=sanitize_attribute(dynamo_user, 'auth_code_date')
+            username=sanitize_attribute(backend_user, 'username'),
+            hash_ldap=sanitize_attribute(backend_user, 'hash_ldap'),
+            password_mod_date=sanitize_attribute(backend_user, 'password_mod_date'),
+            email=sanitize_attribute(backend_user, 'email'),
+            uidNumber=sanitize_attribute(backend_user, 'uidNumber'),
+            public_keys=sanitize_attribute(backend_user, 'public_keys'),
+            sshkey_mod_date=sanitize_attribute(backend_user, 'sshkey_mod_date'),
+            groups=sanitize_attribute(backend_user, 'groups'),
+            auth_code=sanitize_attribute(backend_user, 'auth_code'),
+            auth_code_date=sanitize_attribute(backend_user, 'auth_code_date')
         )
 
     def get_role(self, rolename):
-        dynamo_role = self.get_dynamo_role(rolename)
-        if not dynamo_role: return False
+        backend_role = {}      # <---- populate from backend source
+        if not backend_role: return False
         return Role(
-            rolename=sanitize_attribute(dynamo_role, 'rolename'),
-            groups=sanitize_attribute(dynamo_role, 'groups')
+            rolename=sanitize_attribute(backend_role, 'rolename')
+            groups=sanitize_attribute(backend_role, 'groups')
         )
 
     def get_group(self, groupname):
-        dynamo_group = self.get_dynamo_user(username)
-        if not dynamo_group: return False
+        backend_group = {}      # <---- populate from backend source
+        if not backend_group: return False
         return Group(
-            groupname=sanitize_attribute(dynamo_group, 'groupname'),
-            gid=sanitize_attribute(dynamo_group, 'gid')
+            groupname=sanitize_attribute(backend_group, 'gid')
+            gid=sanitize_attribute(backend_group, 'gid')
         )
-
-    def get_dynamo_role(self, rolename):
-        r = self.table_roles.get_item(Key={'rolename': rolename})
-        if r:
-            return r['Item']
-        else:
-            return False
-
-    def get_dynamo_user(self, username):
-        u = self.table_users.get_item(Key={'username': username})
-        if u:
-            return u['Item']
-        else:
-            return False
-
-    def get_dynamo_group(self, groupname):
-        g = self.table_groups.get_item(Key={'groupname': groupname})
-        if g:
-            return g['Item']
-        else:
-            return None
 
     def create_role(self, rolename, groups):
         r = Role(
@@ -232,19 +136,18 @@ class connection(Backend):
         return u
 
     def delete_role(self, rolename):
-        return self.table_roles.delete_item(Key={'rolename': rolename})
+        return True
 
     def delete_user(self, username):
-        return self.table_users.delete_item(Key={'username': username})
+        return True
 
     def delete_group(self, groupname):
-        members = self.get_group_members(groupname)
+        members = self.get_group_users(groupname)
         for member in members:
             self.remove_user_from_group(member, groupname)
-        if self.get_group_members(groupname):
+        if self.get_group_users(groupname):
             return False
-        return self.table_groups.delete_item(Key={'groupname': groupname})
-
+        return True
 
     def add_group_to_role(self, rolename, groupname):
         r = self.get_role(rolename)
@@ -282,7 +185,7 @@ class connection(Backend):
         else:
             return False
 
-    def get_group_users(groupname):
+    def get_group_users(self, groupname):
         users = self.get_users()
         return [u.username for u in users if groupname in u.groups]
 

@@ -1,8 +1,6 @@
 import usermgmtlib.usermgmt as usermgmt
 from usermgmtlib.backends import Backend, Singleton
 
-from time import time
-
 import google.auth
 from google.cloud import datastore
 
@@ -11,19 +9,6 @@ def sanitize_attribute(item, attr):
         return item[attr]
     except (KeyError, AttributeError):
         return None
-
-
-import time
-def timeit(method):
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        print('%r (%r, %r) %2.2f sec' % \
-              (method.__name__, args, kw, te-ts))
-        return result
-    return timed
-
 
 class Role(usermgmt.Role):
     def refresh(self):
@@ -82,25 +67,21 @@ class User(usermgmt.User):
 class connection(Backend):
     __metaclass__ = Singleton
 
-    @timeit
     def __init__(self):
         self.name = 'datastore'
         credentials, project = google.auth.default()
         self.client = datastore.Client(project)
 
-    @timeit
     def get_kind_list(self, kind, order=None):
         query = self.client.query(kind=kind)
         if order:
             query.order = [order]
         return list(query.fetch())
 
-    @timeit
     def delete_ds_key(self, kind, key):
         ds_key = self.client.key(kind, key)
         return self.client.delete(ds_key)
 
-    @timeit
     def get_ds_entity(self, kind, key):
         try:
             ds_key = self.client.key(kind, key)
@@ -111,12 +92,10 @@ class connection(Backend):
             pass
         return False
 
-    @timeit
     def new_ds_entity(self, kind, key):
         ds_key = self.client.key(kind, key)
         return datastore.Entity(key=ds_key)
 
-    @timeit
     def get_users(self):
         ds_users = self.get_kind_list('usermgmt_users')
         if not ds_users: return []
@@ -134,7 +113,6 @@ class connection(Backend):
             )
         return users
 
-    @timeit
     def get_groups(self):
         groups = []
         ds_groups = self.get_kind_list('usermgmt_groups')
@@ -148,7 +126,6 @@ class connection(Backend):
             )
         return groups
 
-    @timeit
     def get_roles(self):
         roles = []
         ds_roles = self.get_kind_list('usermgmt_roles')
@@ -161,7 +138,6 @@ class connection(Backend):
             )
         return roles
 
-    @timeit
     def get_user(self, username):
         ds_user = self.get_ds_entity('usermgmt_users', username)
         if not ds_user: return False
@@ -178,7 +154,6 @@ class connection(Backend):
             auth_code_date=sanitize_attribute(ds_user, 'auth_code_date')
         )
 
-    @timeit
     def get_role(self, rolename):
         ds_role = self.get_ds_entity('usermgmt_roles', rolename)
         if not ds_role: return False
@@ -187,7 +162,6 @@ class connection(Backend):
             groups=sanitize_attribute(ds_role, 'groups')
         )
 
-    @timeit
     def get_group(self, groupname):
         ds_group = self.get_ds_entity('usermgmt_group', groupname)
         if not ds_group: return False
@@ -196,7 +170,6 @@ class connection(Backend):
             gid=sanitize_attribute(ds_group, 'gid')
         )
 
-    @timeit
     def create_role(self, rolename, groups):
         r = Role(
             rolename=rolename,
@@ -205,7 +178,6 @@ class connection(Backend):
         r.save()
         return r
 
-    @timeit
     def create_group(self, groupname):
         g = Group(
             groupname=groupname,
@@ -214,7 +186,6 @@ class connection(Backend):
         g.save()
         return g
 
-    @timeit
     def create_user(self, username, email, rolename):
         u = User(
             username=username,
@@ -225,15 +196,12 @@ class connection(Backend):
         u.save()
         return u
 
-    @timeit
     def delete_role(self, rolename):
-        return self.delete_ds_key('usermgmt_roels', rolename)
+        return self.delete_ds_key('usermgmt_roles', rolename)
 
-    @timeit
     def delete_user(self, username):
         return self.delete_ds_key('usermgmt_users', username)
 
-    @timeit
     def delete_group(self, groupname):
         members = self.get_group_users(groupname)
         for member in members:
@@ -242,7 +210,6 @@ class connection(Backend):
             return False
         return self.delete_ds_key('usermgmt_groups', groupname)
 
-    @timeit
     def add_group_to_role(self, rolename, groupname):
         r = self.get_role(rolename)
         if groupname not in r.groups:
@@ -252,7 +219,6 @@ class connection(Backend):
         else:
             return False
 
-    @timeit
     def remove_group_from_role(self, rolename, groupname):
         r = self.get_role(rolename)
         if groupname in r.groups:
@@ -262,7 +228,6 @@ class connection(Backend):
         else:
             return False
 
-    @timeit
     def add_user_to_group(self, username, groupname):
         u = self.get_user(username)
         if groupname not in u.groups:
@@ -272,7 +237,6 @@ class connection(Backend):
         else:
             return False
 
-    @timeit
     def remove_user_from_group(self, username, groupname):
         u = self.get_user(username)
         if groupname in u.groups:
@@ -282,15 +246,12 @@ class connection(Backend):
         else:
             return False
 
-    @timeit
     def get_group_users(self, groupname):
         users = self.get_users()
         return [u.username for u in users if groupname in u.groups]
 
-    @timeit
     def get_max_gid(self):
         return int(max([group.gid for group in self.get_groups()]))+1
 
-    @timeit
     def get_max_uidNumber(self):
         return int(max([user.uidNumber for user in self.get_users()]))+1
