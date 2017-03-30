@@ -76,7 +76,6 @@ class connection(Backend):
         if not ldap_users: return []
         groups = self.get_user_groups()
         for u in ldap_users:
-            pw = u['raw_attributes']['userPassword'][0].decode()
             user_groups = []
             if u['raw_attributes']['uid'][0].decode() in groups:
                 user_groups = groups[u['raw_attributes']['uid'][0].decode()]
@@ -88,7 +87,7 @@ class connection(Backend):
             users.append(
                 User(
                     username=u['raw_attributes']['uid'][0].decode(),
-                    password=pw,
+                    hash_ldap=u['raw_attributes']['userPassword'][0].decode(),
                     uidNumber=u['raw_attributes']['uidNumber'][0].decode(),
                     email=u['raw_attributes']['mail'][0].decode(),
                     public_keys=keys,
