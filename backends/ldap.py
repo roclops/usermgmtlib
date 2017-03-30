@@ -89,7 +89,7 @@ class connection(Backend):
                 User(
                     username=u['raw_attributes']['uid'][0].decode(),
                     password=pw,
-                    uid=u['raw_attributes']['uidNumber'][0].decode(),
+                    uidNumber=u['raw_attributes']['uidNumber'][0].decode(),
                     email=u['raw_attributes']['mail'][0].decode(),
                     public_keys=keys,
                     groups=user_groups
@@ -147,8 +147,8 @@ class connection(Backend):
         if u.public_keys:
             attrs['objectclass'].append('ldapPublicKey')
             attrs['sshPublicKey'] = [str(k) for k in list(u.public_keys)]
-        attrs['userPassword'] = u.password
-        attrs['uidNumber'] = u.uid
+        attrs['userPassword'] = u.hash_ldap
+        attrs['uidNumber'] = u.uidNumber
         result = self.connection.add(dn, attributes=attrs)
         if not result:
             print(self.connection.result)
