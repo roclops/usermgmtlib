@@ -1,6 +1,7 @@
 import usermgmtlib.usermgmt as usermgmt
 from usermgmtlib.backends import Backend, Singleton
 
+import os
 import boto3
 
 def sanitize_attribute(item, attr):
@@ -99,12 +100,41 @@ class User(usermgmt.User):
 class connection(Backend):
     __metaclass__ = Singleton
 
-    def __init__(self):
+    def __init__(self,
+        aws_access_key_id=os.getenv('AWS_ACCESS', None),
+        aws_secret_access_key=os.getenv('AWS_SECRET', None),
+        role_arn=os.getenv('ROLE_ARN', None)):
+
         self.name = 'dynamodb'
+
+        if self.role_arn:
+            self.role_arn_to_session(self.role_arn)
+        elif self.aws_access_key_id and self.aws_secret_access_key:
+            self.keys_to_session(self.aws_access_key_id, self.aws_secret_access_key)
+
         dynamodb = boto3.resource('dynamodb')
         self.table_users = dynamodb.Table('ldap_users')
         self.table_groups = dynamodb.Table('ldap_groups')
         self.table_roles = dynamodb.Table('ldap_roles')
+
+    def role_arn_to_session(self, role_arn):
+        client = boto3.client('sts')
+        response = client.assume_role(RoleArn=role_arn, RoleSessionName='usermgmt')
+        return self.create_session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'])
+
+    def keys_to_session(self, aws_access_key_id, aws_secret_access_key):
+        return self.create_session(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key)
+
+    def create_session(self, aws_access_key_id, aws_secret_access_key, aws_session_token=None):
+        return boto3.setup_default_session(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token)
 
     def get_users(self):
         users = []
