@@ -107,10 +107,10 @@ class connection(Backend):
 
         self.name = 'dynamodb'
 
-        if self.role_arn:
-            self.role_arn_to_session(self.role_arn)
-        elif self.aws_access_key_id and self.aws_secret_access_key:
-            self.keys_to_session(self.aws_access_key_id, self.aws_secret_access_key)
+        if role_arn:
+            self.role_arn_to_session(role_arn)
+        elif aws_access_key_id and aws_secret_access_key:
+            self.keys_to_session(aws_access_key_id, aws_secret_access_key)
 
         dynamodb = boto3.resource('dynamodb')
         self.table_users = dynamodb.Table('ldap_users')
