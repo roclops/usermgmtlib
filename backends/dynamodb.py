@@ -120,11 +120,6 @@ class connection(Backend):
 
         dynamodb = self.session.resource('dynamodb')
 
-        print(self.session.client('sts').get_caller_identity().get('Account'))
-        print(users_table)
-        print(groups_table)
-        print(roles_table)
-
         self.table_users = dynamodb.Table(users_table)
         self.table_groups = dynamodb.Table(groups_table)
         self.table_roles = dynamodb.Table(roles_table)
