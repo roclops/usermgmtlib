@@ -103,19 +103,25 @@ class connection(Backend):
     def __init__(self,
         aws_access_key_id=os.getenv('AWS_ACCESS', None),
         aws_secret_access_key=os.getenv('AWS_SECRET', None),
-        role_arn=os.getenv('ROLE_ARN', None)):
+        role_arn=os.getenv('ROLE_ARN', None),
+        users_table=os.getenv('USERS_TABLE', 'ldap_users'),
+        groups_table=os.getenv('GROUPS_TABLE', 'ldap_groups'),
+        roles_table=os.getenv('ROLES_TABLE', 'ldap_roles')
+        ):
 
         self.name = 'dynamodb'
 
         if role_arn:
-            self.role_arn_to_session(role_arn)
+            self.session = self.role_arn_to_session(role_arn)
         elif aws_access_key_id and aws_secret_access_key:
-            self.keys_to_session(aws_access_key_id, aws_secret_access_key)
+            self.session = self.keys_to_session(aws_access_key_id, aws_secret_access_key)
+        else:
+            self.session = self.create_session()
 
-        dynamodb = boto3.resource('dynamodb')
-        self.table_users = dynamodb.Table('ldap_users')
-        self.table_groups = dynamodb.Table('ldap_groups')
-        self.table_roles = dynamodb.Table('ldap_roles')
+        dynamodb = self.session.resource('dynamodb')
+        self.table_users = dynamodb.Table(users_table)
+        self.table_groups = dynamodb.Table(groups_table)
+        self.table_roles = dynamodb.Table(roles_table)
 
     def role_arn_to_session(self, role_arn):
         client = boto3.client('sts')
@@ -125,16 +131,11 @@ class connection(Backend):
             aws_secret_access_key=response['Credentials']['SecretAccessKey'],
             aws_session_token=response['Credentials']['SessionToken'])
 
-    def keys_to_session(self, aws_access_key_id, aws_secret_access_key):
-        return self.create_session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key)
+    def keys_to_session(self, **kwargs):
+        return self.create_session(**kwargs)
 
-    def create_session(self, aws_access_key_id, aws_secret_access_key, aws_session_token=None):
-        return boto3.setup_default_session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token)
+    def create_session(self, **kwargs):
+        return boto3.session.Session(**kwargs)
 
     def get_users(self):
         users = []
