@@ -71,7 +71,7 @@ class connection(Backend):
         for r in backend_roles:
             roles.append(
                 Role(
-                    rolename=sanitize_attribute(r, 'rolename')
+                    rolename=sanitize_attribute(r, 'rolename'),
                     groups=sanitize_attribute(r, 'groups')
                 )
             )
