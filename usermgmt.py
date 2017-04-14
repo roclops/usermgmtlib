@@ -1,3 +1,4 @@
+from passlib.hash import ldap_salted_sha1
 from sshpubkeys import SSHKey
 import datetime
 
@@ -102,6 +103,10 @@ class User(Usermgmt):
 
     def attrs(self):
         return ['username', 'password', 'email', 'uidNumber', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
+
+    def check_password(self, password):
+        return ldap_salted_sha1.identify(self.hash_ldap) and
+            ldap_salted_sha1.verify(password, self.hash_ldap)
 
     def validate_key(self, key):
         try:
