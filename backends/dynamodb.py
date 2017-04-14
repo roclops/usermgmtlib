@@ -36,12 +36,6 @@ class Group(usermgmt.Group):
         return conn.table_groups.put_item(Item=self.get_dict())
 
 class User(usermgmt.User):
-    def set(self, attribute, value):
-        self.refresh()
-        attr = setattr(self, attribute, value)
-        self.save()
-        return True
-
     def refresh(self):
         conn = connection()
         u = conn.get_user(self.username)

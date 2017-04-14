@@ -104,9 +104,27 @@ class User(Usermgmt):
     def attrs(self):
         return ['username', 'password', 'email', 'uidNumber', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
 
+    def set(self, attribute, value):
+        self.refresh()
+        attr = setattr(self, attribute, value)
+        self.save()
+        return True
+
     def check_password(self, password):
         return ldap_salted_sha1.identify(self.hash_ldap) and
             ldap_salted_sha1.verify(password, self.hash_ldap)
+
+    def set_password(self, password):
+        try:
+            self.hash_ldap = ldap_salted_sha1.encrypt(password, salt_size=16)
+            self.password_mod_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            self.auth_code = None
+            self.auth_code_date = None
+            self.save()
+            return True
+        except Exception as e:
+            print("Exception: %s" % e)
+            return False
 
     def validate_key(self, key):
         try:
