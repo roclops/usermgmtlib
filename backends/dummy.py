@@ -97,7 +97,7 @@ class connection(Backend):
         backend_role = {}      # <---- populate from backend source
         if not backend_role: return False
         return Role(
-            rolename=sanitize_attribute(backend_role, 'rolename')
+            rolename=sanitize_attribute(backend_role, 'rolename'),
             groups=sanitize_attribute(backend_role, 'groups')
         )
 
@@ -105,7 +105,7 @@ class connection(Backend):
         backend_group = {}      # <---- populate from backend source
         if not backend_group: return False
         return Group(
-            groupname=sanitize_attribute(backend_group, 'gid')
+            groupname=sanitize_attribute(backend_group, 'gid'),
             gid=sanitize_attribute(backend_group, 'gid')
         )
 
