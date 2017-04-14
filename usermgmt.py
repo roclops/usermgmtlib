@@ -111,7 +111,7 @@ class User(Usermgmt):
         return True
 
     def check_password(self, password):
-        return ldap_salted_sha1.identify(self.hash_ldap) and
+        return ldap_salted_sha1.identify(self.hash_ldap) and \
             ldap_salted_sha1.verify(password, self.hash_ldap)
 
     def set_password(self, password):
