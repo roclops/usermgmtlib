@@ -14,7 +14,7 @@ class Role(usermgmt.Role):
     def refresh(self):
         conn = connection()
         r = conn.get_role(self.rolename)
-        for k, v in r.get_dict():
+        for k, v in r.get_dict().items():
             setattr(self, k, v)
         return True
 
@@ -27,7 +27,7 @@ class Group(usermgmt.Group):
     def refresh(self):
         conn = connection()
         g = conn.get_group(self.groupname)
-        for k, v in g.get_dict():
+        for k, v in g.get_dict().items():
             setattr(self, k, v)
         return True
 
@@ -40,7 +40,7 @@ class User(usermgmt.User):
     def refresh(self):
         conn = connection()
         u = conn.get_user(self.username)
-        for k, v in u.get_dict():
+        for k, v in u.get_dict().items():
             setattr(self, k, v)
         return True
 
