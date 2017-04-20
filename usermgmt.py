@@ -105,7 +105,6 @@ class User(Usermgmt):
         return ['username', 'password', 'email', 'uidNumber', 'public_keys', 'groups', 'hash_ldap', 'password_mod_date', 'sshkey_mod_date', 'auth_code', 'auth_code_date']
 
     def set(self, attribute, value):
-        self.refresh()
         attr = setattr(self, attribute, value)
         self.save()
         return True

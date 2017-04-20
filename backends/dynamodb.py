@@ -14,7 +14,8 @@ class Role(usermgmt.Role):
     def refresh(self):
         conn = connection()
         r = conn.get_role(self.rolename)
-        self.roles = sanitize_attribute(r, 'roles')
+        for k, v in r.get_dict():
+            setattr(self, k, v)
         return True
 
     def save(self):
@@ -26,8 +27,8 @@ class Group(usermgmt.Group):
     def refresh(self):
         conn = connection()
         g = conn.get_group(self.groupname)
-        self.groupname = sanitize_attribute(g, 'groupname')
-        self.gid = sanitize_attribute(g, 'gid')
+        for k, v in g.get_dict():
+            setattr(self, k, v)
         return True
 
     def save(self):
@@ -39,15 +40,8 @@ class User(usermgmt.User):
     def refresh(self):
         conn = connection()
         u = conn.get_user(self.username)
-        self.hash_ldap = sanitize_attribute(u, 'hash_ldap')
-        self.password_mod_date = sanitize_attribute(u, 'password_mod_date')
-        self.email = sanitize_attribute(u, 'email')
-        self.uidNumber = sanitize_attribute(u, 'uidNumber')
-        self.public_keys = sanitize_attribute(u, 'public_keys')
-        self.sshkey_mod_date = sanitize_attribute(u, 'sshkey_mod_date')
-        self.groups = sanitize_attribute(u, 'groups')
-        self.auth_code = sanitize_attribute(u, 'auth_code')
-        self.auth_code_date = sanitize_attribute(u, 'auth_code_date')
+        for k, v in u.get_dict():
+            setattr(self, k, v)
         return True
 
     def save(self):
