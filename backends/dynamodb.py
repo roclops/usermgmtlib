@@ -102,7 +102,10 @@ class connection(Backend):
         if role_arn:
             self.session = self.role_arn_to_session(role_arn)
         elif aws_access_key_id and aws_secret_access_key:
-            self.session = self.keys_to_session(aws_access_key_id, aws_secret_access_key)
+            self.session = self.keys_to_session(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key
+            )
         else:
             self.session = self.create_session()
 
