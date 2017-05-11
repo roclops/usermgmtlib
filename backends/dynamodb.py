@@ -202,7 +202,7 @@ class connection(Backend):
         )
 
     def get_group(self, groupname):
-        dynamo_group = self.get_dynamo_user(username)
+        dynamo_group = self.get_dynamo_group(groupname)
         if not dynamo_group: return False
         return Group(
             groupname=sanitize_attribute(dynamo_group, 'groupname'),
