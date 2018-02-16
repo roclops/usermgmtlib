@@ -55,12 +55,12 @@ class connection(Backend):
         return self.connection.delete(dn)
 
     def get_user_groups(self):
-        ldap_groups = self.search('(gidNumber=*)', base='ou=Groups,' + self.domain, retrieve_attributes=['cn', 'uniqueMember'])
+        ldap_groups = self.search('(gidNumber=*)', base='ou=Groups,' + self.domain, retrieve_attributes=['cn', 'member'])
         user_groups = {}
         if ldap_groups:
             for g in ldap_groups:
-                if not g or 'uniqueMember' not in g['raw_attributes']: continue
-                for member in g['raw_attributes']['uniqueMember']:
+                if not g or 'member' not in g['raw_attributes']: continue
+                for member in g['raw_attributes']['member']:
                     full_dn_match = re.match(r'uid=(.+?),ou=People,' + self.domain, member.decode(), re.I)
                     if full_dn_match:
                         member = full_dn_match.group(1)
@@ -112,10 +112,10 @@ class connection(Backend):
     def add_group(self, g):
         dn = "cn=%s,ou=Groups,%s" % (g.groupname, self.domain)
         attrs = {}
-        attrs['objectclass'] = ['top', 'groupOfUniqueNames']
+        attrs['objectclass'] = ['top', 'groupOfNames', 'posixGroup']
         attrs['cn'] = g.groupname
         attrs['gidNumber'] = g.gid
-        attrs['uniqueMember'] = 'uid=dummy'
+        attrs['member'] = 'uid=dummy'
         result = self.connection.add(dn, attributes=attrs)
         if result:
             print('Added group [%s].' % (g.groupname))
@@ -164,7 +164,7 @@ class connection(Backend):
         for group in u.groups:
             dn = "cn=%s,ou=Groups,%s" % (group, self.domain)
             attrs = {
-                'uniqueMember': [( MODIFY_ADD, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
+                'member': [( MODIFY_ADD, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
             }
             try:
                 result = self.connection.modify(dn, attrs)
@@ -193,7 +193,7 @@ class connection(Backend):
         for group in u.groups:
             dn = "cn=%s,ou=Groups,%s" % (group, self.domain)
             attrs = {
-                'uniqueMember': [( MODIFY_DELETE, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
+                'member': [( MODIFY_DELETE, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
             }
             try:
                 result = self.connection.modify(dn, attrs)
