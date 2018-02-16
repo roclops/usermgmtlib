@@ -112,7 +112,7 @@ class connection(Backend):
     def add_group(self, g):
         dn = "cn=%s,ou=Groups,%s" % (g.groupname, self.domain)
         attrs = {}
-        attrs['objectclass'] = ['top', 'groupOfNames', 'posixGroup']
+        attrs['objectclass'] = ['top', 'groupOfNames']
         attrs['cn'] = g.groupname
         attrs['gidNumber'] = g.gid
         result = self.connection.add(dn, attributes=attrs)
