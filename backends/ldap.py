@@ -55,12 +55,12 @@ class connection(Backend):
         return self.connection.delete(dn)
 
     def get_user_groups(self):
-        ldap_groups = self.search('(gidNumber=*)', base='ou=Groups,' + self.domain, retrieve_attributes=['cn', 'member'])
+        ldap_groups = self.search('(gidNumber=*)', base='ou=Groups,' + self.domain, retrieve_attributes=['cn', 'memberUid'])
         user_groups = {}
         if ldap_groups:
             for g in ldap_groups:
-                if not g or 'member' not in g['raw_attributes']: continue
-                for member in g['raw_attributes']['member']:
+                if not g or 'memberUid' not in g['raw_attributes']: continue
+                for member in g['raw_attributes']['memberUid']:
                     full_dn_match = re.match(r'uid=(.+?),ou=People,' + self.domain, member.decode(), re.I)
                     if full_dn_match:
                         member = full_dn_match.group(1)
@@ -112,7 +112,7 @@ class connection(Backend):
     def add_group(self, g):
         dn = "cn=%s,ou=Groups,%s" % (g.groupname, self.domain)
         attrs = {}
-        attrs['objectclass'] = ['top', 'groupOfNames']
+        attrs['objectclass'] = ['top', 'posixGroup']
         attrs['cn'] = g.groupname
         attrs['gidNumber'] = g.gid
         result = self.connection.add(dn, attributes=attrs)
@@ -163,7 +163,7 @@ class connection(Backend):
         for group in u.groups:
             dn = "cn=%s,ou=Groups,%s" % (group, self.domain)
             attrs = {
-                'member': [( MODIFY_ADD, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
+                'memberUid': [( MODIFY_ADD, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
             }
             try:
                 result = self.connection.modify(dn, attrs)
@@ -192,7 +192,7 @@ class connection(Backend):
         for group in u.groups:
             dn = "cn=%s,ou=Groups,%s" % (group, self.domain)
             attrs = {
-                'member': [( MODIFY_DELETE, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
+                'memberUid': [( MODIFY_DELETE, 'uid=%s,ou=People,%s' % (u.username, self.domain) )]
             }
             try:
                 result = self.connection.modify(dn, attrs)
