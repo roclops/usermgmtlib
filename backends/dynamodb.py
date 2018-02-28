@@ -20,7 +20,7 @@ class Role(usermgmt.Role):
 
     def save(self):
         conn = connection()
-        conn.delete_role(rolename)
+        conn.delete_role(self.rolename)
         return conn.table_roles.put_item(Item=self.get_dict())
 
 class Group(usermgmt.Group):
