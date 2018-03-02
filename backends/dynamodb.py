@@ -211,21 +211,21 @@ class connection(Backend):
 
     def get_dynamo_role(self, rolename):
         r = self.table_roles.get_item(Key={'rolename': rolename})
-        if r:
+        if r and 'Item' in r:
             return r['Item']
         else:
             return False
 
     def get_dynamo_user(self, username):
         u = self.table_users.get_item(Key={'username': username})
-        if u:
+        if u and 'Item' in u:
             return u['Item']
         else:
             return False
 
     def get_dynamo_group(self, groupname):
         g = self.table_groups.get_item(Key={'groupname': groupname})
-        if g:
+        if g and 'Item' in u:
             return g['Item']
         else:
             return None
