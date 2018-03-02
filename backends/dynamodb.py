@@ -225,7 +225,7 @@ class connection(Backend):
 
     def get_dynamo_group(self, groupname):
         g = self.table_groups.get_item(Key={'groupname': groupname})
-        if g and 'Item' in u:
+        if g and 'Item' in g:
             return g['Item']
         else:
             return None
