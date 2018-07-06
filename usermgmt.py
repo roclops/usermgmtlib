@@ -180,7 +180,7 @@ class User(Usermgmt):
         return None
 
     def is_admin(self):
-        return self.is_group_member('internal.admins')
+        return self.is_group_member('internal.admins') or self.is_group_member('unix.admins')
 
     def is_group_member(self, group):
         if group in self.groups:
