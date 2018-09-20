@@ -6,7 +6,14 @@ from google.cloud import datastore
 
 def sanitize_attribute(item, attr):
     try:
-        return item[attr]
+        if isinstance(item[attr], str):
+            return str(item[attr])
+        elif isinstance(item[attr], bytes):
+            return item[attr].decode('utf-8')
+        elif isinstance(item[attr], list):
+            return [i.decode('utf-8') if isinstance(i, str) else i for i in item[attr]]
+        else:
+            return item[attr]
     except (KeyError, AttributeError):
         return None
 
