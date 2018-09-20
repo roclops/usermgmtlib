@@ -251,7 +251,15 @@ class connection(Backend):
         return [u.username for u in users if groupname in u.groups]
 
     def get_max_gid(self):
-        return int(max([group.gid for group in self.get_groups()]))+1
+        try:
+            max_gid = int(max([group.gid for group in self.get_groups()]))+1
+        except ValueError:
+            max_gid = 9000
+        return max_gid
 
     def get_max_uidNumber(self):
-        return int(max([user.uidNumber for user in self.get_users()]))+1
+        try:
+            max_uidNumber = int(max([user.uidNumber for user in self.get_users()]))+1
+        except ValueError:
+            max_uidNumber = 2500
+        return max_uidNumber
