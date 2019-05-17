@@ -1,4 +1,4 @@
-from passlib.hash import ldap_salted_sha1
+from passlib.hash import ldap_pbkdf2_sha256
 from sshpubkeys import SSHKey
 import datetime
 
@@ -110,12 +110,11 @@ class User(Usermgmt):
         return True
 
     def check_password(self, password):
-        return ldap_salted_sha1.identify(self.hash_ldap) and \
-            ldap_salted_sha1.verify(password, self.hash_ldap)
+        return ldap_pbkdf2_sha256.verify(password, self.hash_ldap)
 
     def set_password(self, password):
         try:
-            self.hash_ldap = ldap_salted_sha1.encrypt(password, salt_size=16)
+            self.hash_ldap = ldap_pbkdf2_sha256.hash(password)
             self.password_mod_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             self.auth_code = None
             self.auth_code_date = None
