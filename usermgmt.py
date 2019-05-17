@@ -1,3 +1,4 @@
+from passlib.hash import ldap_salted_sha1
 from passlib.hash import ldap_pbkdf2_sha256
 from sshpubkeys import SSHKey
 import datetime
