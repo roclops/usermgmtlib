@@ -110,7 +110,10 @@ class User(Usermgmt):
         return True
 
     def check_password(self, password):
-        return ldap_pbkdf2_sha256.verify(password, self.hash_ldap)
+        return ( ldap_pbkdf2_sha256.identify(self.hash_ldap) and \
+            ldap_pbkdf2_sha256.verify(password, self.hash_ldap) ) \
+            or (ldap_salted_sha1.identify(self.hash_ldap) and \
+            ldap_salted_sha1.verify(password, self.hash_ldap))
 
     def set_password(self, password):
         try:
