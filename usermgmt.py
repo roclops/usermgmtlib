@@ -44,7 +44,7 @@ class Role(Usermgmt):
         return "<Role {}>".format(self.rolename)
 
     def attrs(self):
-        return ['rolename', 'roles']
+        return ['rolename', 'groups']
 
 class Group(Usermgmt):
     def __init__(self, groupname=None, gid=None):
